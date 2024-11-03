@@ -41,7 +41,10 @@ class ForwardChaining:
                 # Lưu kết luận của quy tắc
                 conclusion_literal = Literal(conclusion.strip())
                 self.rules[conclusion_literal.name] = (len(premises_list), premises_list)
-                print(f"Mệnh đề sau xử lý có kết luận {conclusion_literal.name} với điều kiện {self.rules[conclusion_literal.name]}")
+                premises_info = ', '.join([f"{literal.name} (phủ định: {is_negated})" for literal, is_negated in premises_list])
+                print(f"Mệnh đề sau xử lý có kết luận {conclusion_literal.name} với điều kiện {self.rules[conclusion_literal.name][0]} và các điều kiện: {premises_info}")
+
+
             elif clause:
                 # Xử lý fact nếu không có dấu =>
                 is_negated = clause.startswith('~')
