@@ -1,6 +1,7 @@
 import sys
 from truthTable import TruthTable
 from forwardChaining import ForwardChaining
+from backwardChaining import BackwardChaining
 
 def main():
     if len(sys.argv) == 3:
@@ -14,7 +15,8 @@ def main():
             FC = ForwardChaining(filename)
             FC.run()
         elif (method == "BC"):
-            print("Backward Chaining")
+            BC = BackwardChaining(filename)
+            BC.run()
         elif (method == "RES"):
             print("Resolution")
         elif (method == "DPLL"):
