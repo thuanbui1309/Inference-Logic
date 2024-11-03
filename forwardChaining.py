@@ -1,23 +1,23 @@
 from typing import List, Dict, Tuple, Deque
 from collections import deque
 import re
-from logic import Literal  # Importing Literal class from logic.py
+from logic import Literal  # Import lớp Literal từ logic.py
 
 class ForwardChaining:
     def __init__(self, filename: str):
         # Khởi tạo các biến cho cơ sở tri thức
-        self.rules: Dict[str, Tuple[int, List[Literal]]] = {}  # Lưu các quy tắc dưới dạng {kết luận: (số lượng điều kiện, danh sách các điều kiện)}
+        self.rules: Dict[str, Tuple[int, List[Tuple[Literal, bool]]]] = {}  # Lưu các quy tắc với phủ định
         self.facts: Deque[Literal] = deque()  # Hàng đợi cho các facts ban đầu
-        self.checked_list: List[str] = []  # Danh sách lưu thứ tự các node đã kiểm tra
+        self.checked_list: List[str] = []  # Danh sách lưu thứ tự kiểm tra
         self.query: Literal = None  # Câu truy vấn cần suy ra
         self.parse_kb_and_query(filename)  # Phân tích file đầu vào để lấy KB và query
 
-    # Phương thức parse_kb_and_query phân tích cơ sở tri thức và câu truy vấn từ file đầu vào
     def parse_kb_and_query(self, filename: str) -> None:
+        # Đọc nội dung từ file
         with open(filename, 'r') as file:
             content = file.read()
 
-        # Tách phần TELL (KB) và ASK (query)
+        # Tách phần TELL (KB) và ASK (query) từ nội dung
         tell_part = re.search(r'TELL\s+([\s\S]*?)\s+ASK', content).group(1).strip()
         ask_part = re.search(r'ASK\s+([\s\S]*)', content).group(1).strip()
         
@@ -28,42 +28,59 @@ class ForwardChaining:
         for clause in tell_part.split(';'):
             clause = clause.strip()
             if '=>' in clause:
-                # Phân tích các quy tắc dưới dạng premises => conclusion
+                # Phân tích các quy tắc dạng premises => conclusion
                 premises, conclusion = clause.split('=>')
-                premises_list = [Literal(p.strip()) for p in premises.split('&')]  # Danh sách điều kiện là các Literal
-                conclusion_literal = Literal(conclusion.strip())  # Kết luận là một Literal
-                # Lưu quy tắc với dạng {conclusion: (số lượng điều kiện, danh sách điều kiện)}
+                premises_list = []
+                for p in premises.split('&'):
+                    # Kiểm tra xem premise có phủ định hay không
+                    is_negated = p.strip().startswith('~')
+                    # Nếu có phủ định, loại bỏ ký tự đầu tiên (~)
+                    literal_name = p[1:] if is_negated else p
+                    literal = Literal(literal_name.strip())
+                    premises_list.append((literal, is_negated))
+                # Lưu kết luận của quy tắc
+                conclusion_literal = Literal(conclusion.strip())
                 self.rules[conclusion_literal.name] = (len(premises_list), premises_list)
-            elif clause:  # Các fact đơn không có '=>'
-                self.facts.append(Literal(clause.strip()))  # Thêm vào hàng đợi ban đầu cho các facts
+                print(f"Mệnh đề sau xử lý có kết luận {conclusion_literal.name} với điều kiện {self.rules[conclusion_literal.name]}")
+            elif clause:
+                # Xử lý fact nếu không có dấu =>
+                is_negated = clause.startswith('~')
+                literal_name = clause[1:] if is_negated else clause
+                literal = Literal(literal_name.strip())
+                # Chỉ thêm fact vào hàng đợi nếu không có phủ định
+                if not is_negated:
+                    self.facts.append(literal)
 
-    # Phương thức run thực hiện suy diễn tiến và trả về kết quả
     def run(self) -> None:
+        # Bắt đầu quá trình suy diễn tiến
         while self.facts:
-            current_fact = self.facts.popleft()  # Lấy fact đầu tiên từ hàng đợi
-            self.checked_list.append(current_fact.name)  # Thêm fact vào danh sách đã kiểm tra
+            # Lấy fact đầu tiên từ hàng đợi
+            current_fact = self.facts.popleft()
+            # Thêm fact vào danh sách đã kiểm tra
+            self.checked_list.append(current_fact.name)
             
             # Kiểm tra nếu fact hiện tại là câu truy vấn
             if current_fact.name == self.query.name:
-                # Trả về kết quả YES với thứ tự các node đã kiểm tra
                 print("YES: " + ", ".join(self.checked_list))
                 return
 
-            # Duyệt qua các quy tắc để xem fact này có thỏa mãn điều kiện cho bất kỳ kết luận nào không
+            # Kiểm tra các quy tắc với fact hiện tại
             for conclusion, (remaining_count, premises) in list(self.rules.items()):
-                if current_fact.name in [p.name for p in premises]:
-                    # Giảm số lượng điều kiện chưa thỏa mãn
+                # Tìm các premise khớp với fact hiện tại và không phủ định
+                match_premise = next((p for p, is_negated in premises if p.name == current_fact.name and not is_negated), None)
+                
+                if match_premise:
+                    # Giảm số lượng điều kiện còn lại của quy tắc
                     updated_count = remaining_count - 1
-                    new_premises = [p for p in premises if p.name != current_fact.name]  # Cập nhật danh sách điều kiện
-                    
-                    # Cập nhật lại quy tắc với số lượng điều kiện và danh sách điều kiện mới
+                    # Cập nhật danh sách premises sau khi loại bỏ premise khớp
+                    new_premises = [(p, is_negated) for p, is_negated in premises if p.name != current_fact.name]
                     self.rules[conclusion] = (updated_count, new_premises)
 
-                    # Nếu tất cả các điều kiện thỏa mãn, thêm kết luận vào hàng đợi
+                    # Nếu tất cả các điều kiện đã thỏa mãn, thêm kết luận vào hàng đợi facts
                     if updated_count == 0:
                         self.facts.append(Literal(conclusion))
-                        # Sau khi thỏa mãn, xóa quy tắc để tránh kiểm tra lặp lại
+                        # Xóa quy tắc đã thỏa mãn
                         del self.rules[conclusion]
 
-        # Nếu hàng đợi trống và câu truy vấn chưa được tìm thấy
-        print("NO")  # Trả về NO khi không thể suy ra câu truy vấn
+        # Nếu không tìm thấy kết luận cho câu truy vấn
+        print("NO")  # Không tìm thấy truy vấn
