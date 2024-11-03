@@ -80,18 +80,22 @@ class BackwardChaining:
 
         # Thêm vào prevent_infinite để tránh đệ quy vô hạn
         self.prevent_infinite.add(literal_name)
+        print(f"{self.prevent_infinite} thêm {literal_name}")
 
         # Kiểm tra các quy tắc
-        if literal_name in self.rules:
+        if literal_name in self.rules: #Kiểm tra xem có conclusion nào trùng với tên đang tìm kiếm không
+            #literal_name là "x", ta sẽ kiểm tra xem có quy tắc nào có kết luận x không (chẳng hạn, a & ~c => x).
             for premises, conclusion_negated in self.rules[literal_name]:
-                if conclusion_negated == is_negated:
+                if conclusion_negated == is_negated: #đảm bảo rằng chỉ khi nào các phủ định của kết luận và literal trùng khớp, quy tắc mới được đánh giá tiếp. Giả dụ a => b hoặc là ~a => ~b 
                     # Kiểm tra tất cả premises với trạng thái phủ định
                     if all(self.TruthValue(p, neg) for p, neg in premises):
-                        self.prevent_infinite.remove(literal_name)
+                        self.prevent_infinite.remove(literal_name) #đảm bảo rằng khi quay lại các đệ quy cấp cao hơn, literal_name có thể được kiểm tra lại nếu cần mà không bị chặn bởi self.prevent_infinite
+                        print(f"{self.prevent_infinite} xóa {literal_name}")
                         if literal_name not in self.checked_literals:
                             self.checked_literals.append(literal_name)
                         return True
 
         # Quay lui nếu không suy diễn được
         self.prevent_infinite.remove(literal_name)
+        print(f"{self.prevent_infinite} xóa {literal_name}")
         return False if not is_negated else True
