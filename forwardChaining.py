@@ -35,20 +35,27 @@ class ForwardChaining:
                     # Kiểm tra xem premise có phủ định hay không
                     is_negated = p.strip().startswith('~')
                     # Nếu có phủ định, loại bỏ ký tự đầu tiên (~)
-                    literal_name = p[1:] if is_negated else p
+                    if is_negated:
+                        literal_name = p[1:]
+                    else:
+                        literal_name = p
                     literal = Literal(literal_name.strip())
                     premises_list.append((literal, is_negated))
                 # Lưu kết luận của quy tắc
                 conclusion_literal = Literal(conclusion.strip())
                 self.rules[conclusion_literal.name] = (len(premises_list), premises_list)
+                #Debug section
                 premises_info = ', '.join([f"{literal.name} (phủ định: {is_negated})" for literal, is_negated in premises_list])
                 print(f"Mệnh đề sau xử lý có kết luận {conclusion_literal.name} với điều kiện {self.rules[conclusion_literal.name][0]} và các điều kiện: {premises_info}")
-
 
             elif clause:
                 # Xử lý fact nếu không có dấu =>
                 is_negated = clause.startswith('~')
-                literal_name = clause[1:] if is_negated else clause
+                # Nếu là phủ định thì tên sẽ bỏ đi phần tử đầu tiên
+                if is_negated:
+                    literal_name = clause[1:]
+                else:
+                    literal_name = clause
                 literal = Literal(literal_name.strip())
                 # Chỉ thêm fact vào hàng đợi nếu không có phủ định
                 if not is_negated:
