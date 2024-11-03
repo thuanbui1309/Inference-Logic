@@ -4,19 +4,21 @@ from typing import Dict, List, Tuple
 
 class BackwardChaining:
     def __init__(self, filename: str):
-        self.rules: Dict[str, List[List[str]]] = {}  # Các quy tắc KB với phần kết luận và vế trái
-        self.facts: deque = deque()  # Các sự kiện đã biết
-        self.query = None  # Biến query cần suy luận
+        # Quy tắc lưu dưới dạng { conclusion: [([premises], is_negated)] }
+        self.rules: Dict[str, List[Tuple[List[Tuple[str, bool]], bool]]] = {}
+        # Sự kiện lưu trữ với cờ phủ định
+        self.facts: Dict[str, bool] = {}
+        self.query: Tuple[str, bool] = None
         self.checked_literals: List[str] = []  # Danh sách các literals đã kiểm tra
-        self.prevent_infinite = set()  # Tránh đệ quy vô hạn
-        self.parse_kb_and_query(filename)  # Phân tích KB và query từ file
+        self.prevent_infinite = set()  # Ngăn vòng lặp đệ quy
+        self.parse_kb_and_query(filename)
 
     def parse_kb_and_query(self, filename: str) -> None:
         """Phân tích file đầu vào để lấy KB và query."""
         with open(filename, 'r') as file:
             content = file.read()
 
-        # Sử dụng regex để lấy phần TELL và ASK
+        # Tách phần TELL và ASK
         tell_part = re.search(r'TELL\s+([\s\S]*?)\s+ASK', content).group(1).strip()
         ask_part = re.search(r'ASK\s+(.*)', content).group(1).strip()
 
@@ -25,58 +27,71 @@ class BackwardChaining:
         for clause in clauses:
             clause = clause.strip()
             if "=>" in clause:
-                # Phân tách vế trái và vế phải của mệnh đề
+                # Phân tích vế trái và vế phải
                 premises, conclusion = clause.split("=>")
-                premises = [p.strip() for p in premises.split("&")]
-                conclusion = conclusion.strip()
-                # Thêm các mệnh đề vào rules
+                premises = [
+                    (p.strip().lstrip("~"), p.strip().startswith("~")) for p in premises.split("&")
+                ]
+                conclusion = conclusion.strip().lstrip("~")
+                is_negated_conclusion = conclusion.startswith("~")
+                
+                # Thêm vào self.rules
                 if conclusion not in self.rules:
                     self.rules[conclusion] = []
-                self.rules[conclusion].append(premises)
+                self.rules[conclusion].append((premises, is_negated_conclusion))
             else:
-                # Nếu là fact, thêm vào hàng đợi facts
-                self.facts.append(clause)
+                # Nếu là fact
+                literal = clause.strip().lstrip("~")
+                is_negated = clause.strip().startswith("~")
+                self.facts[literal] = not is_negated  # Thêm trạng thái phủ định vào facts
 
-        # Lưu query
-        self.query = ask_part
+        # Lưu truy vấn với cờ phủ định nếu có
+        self.query = (ask_part.strip().lstrip("~"), ask_part.strip().startswith("~"))
 
     def run(self):
-        """Phương thức chạy thuật toán và in kết quả YES hoặc NO."""
-        result = self.DoesEntail(self.query)
+        """Chạy thuật toán và in kết quả YES hoặc NO."""
+        result = self.DoesEntail(*self.query)
         if result:
             print("YES: " + ", ".join(self.checked_literals))
         else:
             print("NO")
 
-    def DoesEntail(self, query: str) -> bool:
-        """Kiểm tra xem query có thể được suy ra từ KB hay không."""
-        return self.TruthValue(query)
+    def DoesEntail(self, literal_name: str, is_negated: bool) -> bool:
+        """Kiểm tra xem literal có thể suy diễn từ KB không."""
+        result = self.TruthValue(literal_name, is_negated)
+        return result if not is_negated else not result
 
-    def TruthValue(self, literal: str) -> bool:
+    def TruthValue(self, literal_name: str, is_negated: bool) -> bool:
         """
-        Hàm đệ quy kiểm tra giá trị đúng sai của literal.
-        Nếu literal là một sự kiện đã biết, trả về True.
+        Đệ quy kiểm tra literal có thể đúng không.
         """
-        if literal in self.facts:
-            if literal not in self.checked_literals:
-                self.checked_literals.append(literal)
-            return True
+        # Kiểm tra nếu là sự kiện đã biết
+        if literal_name in self.facts:
+            value = self.facts[literal_name]
+            if is_negated:
+                return not value
+            else:
+                if literal_name not in self.checked_literals:
+                    self.checked_literals.append(literal_name)
+                return value
 
-        if literal in self.prevent_infinite:
+        if literal_name in self.prevent_infinite:
             return False
 
-        # Thêm literal vào prevent_infinite để tránh đệ quy vô hạn
-        self.prevent_infinite.add(literal)
+        # Thêm vào prevent_infinite để tránh đệ quy vô hạn
+        self.prevent_infinite.add(literal_name)
 
-        # Kiểm tra các mệnh đề mà literal xuất hiện ở vế phải
-        if literal in self.rules:
-            for premises in self.rules[literal]:
-                if all(self.TruthValue(premise) for premise in premises):
-                    self.prevent_infinite.remove(literal)
-                    if literal not in self.checked_literals:
-                        self.checked_literals.append(literal)
-                    return True
+        # Kiểm tra các quy tắc
+        if literal_name in self.rules:
+            for premises, conclusion_negated in self.rules[literal_name]:
+                if conclusion_negated == is_negated:
+                    # Kiểm tra tất cả premises với trạng thái phủ định
+                    if all(self.TruthValue(p, neg) for p, neg in premises):
+                        self.prevent_infinite.remove(literal_name)
+                        if literal_name not in self.checked_literals:
+                            self.checked_literals.append(literal_name)
+                        return True
 
-        # Quay lui nếu không suy diễn được literal
-        self.prevent_infinite.remove(literal)
-        return False
+        # Quay lui nếu không suy diễn được
+        self.prevent_infinite.remove(literal_name)
+        return False if not is_negated else True
