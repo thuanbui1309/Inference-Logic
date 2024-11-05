@@ -1,96 +1,76 @@
-from typing import List, Dict, Tuple, Deque
-from collections import deque
 import re
-from logic import Literal  # Import lớp Literal từ logic.py
+from collections import deque
+from typing import Dict, List, Tuple
 
 class ForwardChaining:
     def __init__(self, filename: str):
-        # Khởi tạo các biến cho cơ sở tri thức
-        self.rules: Dict[str, Tuple[int, List[Tuple[Literal, bool]]]] = {}  # Lưu các quy tắc với phủ định
-        self.facts: Deque[Literal] = deque()  # Hàng đợi cho các facts ban đầu
-        self.checked_list: List[str] = []  # Danh sách lưu thứ tự kiểm tra
-        self.query: Literal = None  # Câu truy vấn cần suy ra
-        self.parse_kb_and_query(filename)  # Phân tích file đầu vào để lấy KB và query
+        # Quy tắc lưu dưới dạng { conclusion: [([premises], is_negated)] }
+        self.rules: Dict[str, List[Tuple[List[Tuple[str, bool]], bool]]] = {}
+        # Sự kiện lưu trữ với cờ phủ định
+        self.facts: Dict[str, bool] = {}
+        self.query: Tuple[str, bool] = None
+        self.derived_facts = set()  # Tập hợp sự kiện được suy diễn trong quá trình chạy
+        self.entailments = []  # Danh sách các ký hiệu đã suy diễn
+        self.parse_kb_and_query(filename)
 
     def parse_kb_and_query(self, filename: str) -> None:
-        # Đọc nội dung từ file
+        """Phân tích file đầu vào để lấy KB và truy vấn."""
         with open(filename, 'r') as file:
             content = file.read()
 
-        # Tách phần TELL (KB) và ASK (query) từ nội dung
+        # Tách phần TELL và ASK
         tell_part = re.search(r'TELL\s+([\s\S]*?)\s+ASK', content).group(1).strip()
-        ask_part = re.search(r'ASK\s+([\s\S]*)', content).group(1).strip()
-        
-        # Thiết lập câu truy vấn
-        self.query = Literal(ask_part.strip())
+        ask_part = re.search(r'ASK\s+(.*)', content).group(1).strip()
 
-        # Phân tích các facts và quy tắc từ phần TELL
-        for clause in tell_part.split(';'):
+        # Phân tích các điều kiện trong TELL
+        clauses = tell_part.split(";")
+        for clause in clauses:
             clause = clause.strip()
-            if '=>' in clause:
-                # Phân tích các quy tắc dạng premises => conclusion
-                premises, conclusion = clause.split('=>')
-                premises_list = []
-                for p in premises.split('&'):
-                    # Kiểm tra xem premise có phủ định hay không
-                    is_negated = p.strip().startswith('~')
-                    # Nếu có phủ định, loại bỏ ký tự đầu tiên (~)
-                    if is_negated:
-                        literal_name = p[1:]
-                    else:
-                        literal_name = p
-                    literal = Literal(literal_name.strip())
-                    premises_list.append((literal, is_negated))
-                # Lưu kết luận của quy tắc
-                conclusion_literal = Literal(conclusion.strip())
-                self.rules[conclusion_literal.name] = (len(premises_list), premises_list)
-                #Debug section
-                premises_info = ', '.join([f"{literal.name} (phủ định: {is_negated})" for literal, is_negated in premises_list])
-                print(f"Mệnh đề sau xử lý có kết luận {conclusion_literal.name} với điều kiện {self.rules[conclusion_literal.name][0]} và các điều kiện: {premises_info}")
+            if "=>" in clause:
+                # Phân tích vế trái và vế phải
+                premises, conclusion = clause.split("=>")
+                premises = [
+                    (p.strip().lstrip("~"), p.strip().startswith("~")) for p in premises.split("&")
+                ]
+                conclusion = conclusion.strip().lstrip("~")
+                is_negated_conclusion = clause.strip().startswith("~")
+                
+                # Thêm vào self.rules
+                if conclusion not in self.rules:
+                    self.rules[conclusion] = []
+                self.rules[conclusion].append((premises, is_negated_conclusion))
+            else:
+                # Nếu là sự kiện
+                literal = clause.strip().lstrip("~")
+                is_negated = clause.strip().startswith("~")
+                self.facts[literal] = not is_negated
 
-            elif clause:
-                # Xử lý fact nếu không có dấu =>
-                is_negated = clause.startswith('~')
-                # Nếu là phủ định thì tên sẽ bỏ đi phần tử đầu tiên
-                if is_negated:
-                    literal_name = clause[1:]
-                else:
-                    literal_name = clause
-                literal = Literal(literal_name.strip())
-                # Chỉ thêm fact vào hàng đợi nếu không có phủ định
-                if not is_negated:
-                    self.facts.append(literal)
+        # Lưu truy vấn với cờ phủ định nếu có
+        self.query = (ask_part.strip().lstrip("~"), ask_part.strip().startswith("~"))
 
-    def run(self) -> None:
-        # Bắt đầu quá trình suy diễn tiến
-        while self.facts:
-            # Lấy fact đầu tiên từ hàng đợi
-            current_fact = self.facts.popleft()
-            # Thêm fact vào danh sách đã kiểm tra
-            self.checked_list.append(current_fact.name)
-            
-            # Kiểm tra nếu fact hiện tại là câu truy vấn
-            if current_fact.name == self.query.name:
-                print("YES: " + ", ".join(self.checked_list))
+    def run(self):
+        """Chạy thuật toán và in kết quả YES hoặc NO với yêu cầu định dạng."""
+        # Khởi tạo các sự kiện đã biết
+        agenda = deque([fact for fact, is_true in self.facts.items() if is_true])
+        self.derived_facts = set(agenda)  # Theo dõi các sự kiện đã suy diễn
+
+        while agenda:
+            fact = agenda.popleft()
+            self.entailments.append(fact)  # Thêm vào danh sách suy diễn
+            # Kiểm tra nếu sự kiện trùng với truy vấn
+            if fact == self.query[0] and self.facts[fact] == (not self.query[1]):
+                print(f"YES: {', '.join(self.entailments)}")
                 return
 
-            # Kiểm tra các quy tắc với fact hiện tại
-            for conclusion, (remaining_count, premises) in list(self.rules.items()):
-                # Tìm các premise khớp với fact hiện tại và không phủ định
-                match_premise = next((p for p, is_negated in premises if p.name == current_fact.name and not is_negated), None)
-                
-                if match_premise:
-                    # Giảm số lượng điều kiện còn lại của quy tắc
-                    updated_count = remaining_count - 1
-                    # Cập nhật danh sách premises sau khi loại bỏ premise khớp
-                    new_premises = [(p, is_negated) for p, is_negated in premises if p.name != current_fact.name]
-                    self.rules[conclusion] = (updated_count, new_premises)
-
-                    # Nếu tất cả các điều kiện đã thỏa mãn, thêm kết luận vào hàng đợi facts
-                    if updated_count == 0:
-                        self.facts.append(Literal(conclusion))
-                        # Xóa quy tắc đã thỏa mãn
-                        del self.rules[conclusion]
-
-        # Nếu không tìm thấy kết luận cho câu truy vấn
-        print("NO")  # Không tìm thấy truy vấn
+            # Xử lý các quy tắc có `fact` trong tiền đề của chúng
+            for conclusion, rules in self.rules.items():
+                for premises, is_negated_conclusion in rules:
+                    # Kiểm tra nếu tất cả tiền đề có trong các sự kiện đã suy diễn
+                    if all((p in self.derived_facts) == (not neg) for p, neg in premises):
+                        if conclusion not in self.derived_facts:
+                            agenda.append(conclusion)
+                            self.derived_facts.add(conclusion)
+                            self.facts[conclusion] = not is_negated_conclusion
+                        
+        # Nếu không thể suy diễn ra truy vấn
+        print("NO")
