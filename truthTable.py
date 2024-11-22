@@ -1,152 +1,127 @@
-import re
-import itertools
-from logic import *
-from typing import Generator
+from itertools import groupby, product
+from typing import Generator, List, Dict
+from parser import Parser
+from converter import CNFConverter
 
 class TruthTable:
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str):
         """
         Initialize the TruthTable with literals, knowledge base, and query.
 
         :param filename: The file containing the knowledge base and query.
         """
-        self.literals: dict[str, Literal] = {}
-        self.kb: list[Operation] = []
-        self.query: Operation = None
+        self.literals = set()
+        self.kb = []
+        self.query = []
 
         self.parse(filename)
-
-    def parse_literals(self, knowledge_base: str) -> dict[str, Literal]:
-        """
-        Parse literals from the knowledge base string.
-
-        :param knowledge_base: The knowledge base string.
-        :return literals: A dictionary of literals.
-        """
-        literals = {}
-        for lit in re.findall(r'[a-zA-Z]', knowledge_base):
-            if lit not in literals:
-                literals[lit] = Literal(lit)
-
-        return literals
     
-    def find_end_parenthesis(self, sentence: str, start_index: int) -> int:
+    def evaluate_expression(self, expression: List[List[str]], assignment: Dict[str, bool]) -> bool:
         """
-        Find the index of the matching closing parenthesis.
+        Evaluate whether an expression is True or False.
+        An expression contains clauses operated by AND.
+        Eg. (a || b) & (c || d)
+        An expression is True when all clauses inside it are True.
 
-        :param sentence: The sentence containing parentheses.
-        :param start_index: The index of the opening parenthesis.
-        :return: The index of the matching closing parenthesis.
+        :param expression: The expression to evaluate.
+        :param assignment: The truth assignment for literals.
+        :return: True if the expression is True, False otherwise.
         """
-        count = 0
-        for i in range(start_index + 1, len(sentence)):
-            if sentence[i] == '(':
-                count += 1
-            if sentence[i] == ')':
-                if count == 0:
-                    return i
-                count -= 1
-
-        return -1
-    
-    def find_all_words(self, expression: str) -> list[str]:
-        """
-        Find all words (tokens) in the expression.
-
-        :param expression: The expression to tokenize.
-        :return: A list of tokens.
-        """
-        token_pattern = r'[a-zA-Z]+|[<=>]+|[~&()]|\|\|'
-        return re.findall(token_pattern, expression)
-
-    def parse_sentence(self, sentence: str) -> Operation:
-        """
-        Parse a sentence into an Operation object.
-
-        :param sentence: The sentence to parse.
-        :return: The parsed Operation object.
-        """
-        # Remove outermost parentheses if they exist
-        if sentence[0] == '(' and self.find_end_parenthesis(sentence, 1) == len(sentence) - 1:
-            sentence = sentence[1:-1]
-
-        # If there is only 1 element, it is a literal
-        if len(sentence) == 1:
-            return self.literals[sentence[0]]
-        
-        # If sentence starts with a negation
-        if sentence[0] == '~':
-            print("Negation")
-            # If there are only 2 elements, it is a negation of a literal
-            if len(sentence) == 2:
-                return Operation('~', [self.literals[sentence[1]]])
+        for clause in expression:
+            clause_value = self.evaluate_clause(clause, assignment)
+            if not clause_value:
+                return False
             
-            # If after negation is a parenthesis, it might be a negation of a clause or the whole sentence
-            if sentence[1] == '(':
-                end_parenthesis_index = self.find_end_parenthesis(sentence, 1)
+        return True
 
-                # If the negation is the negation of the whole sentence
-                if end_parenthesis_index == len(sentence) - 1:
-                    return Operation('~', [self.parse_sentence(sentence[2:])])
-                # If the negation is the negation of a clause inside this sentence
-                # That means there is another clause after this clause
-                else:
-                    next_operation = sentence[end_parenthesis_index + 1]
-                    next_clause = sentence[end_parenthesis_index + 2:]
-                    premises = [
-                        Operation('~', [self.parse_sentence(sentence[2:end_parenthesis_index])]),
-                        self.parse_sentence(next_clause)
-                    ]
-
-                    return Operation(next_operation, premises)
-                
-            # If none of the above, sentence starts with a negation of a literal and an operation
-            first_literal = sentence[1]
-            operation = sentence[2]
-            next_clause = sentence[3:]
-            premises = [
-                Operation('~', [self.literals[first_literal]]),
-                self.parse_sentence(next_clause)
-            ]
-            return Operation(operation, premises)
-
-        # If sentence starts with a parenthesis
-        # Because we have removed outermost parentheses, this means there are 2 clauses in this sentence
-        if sentence[0] == "(":
-            end_parenthesis_index = self.find_end_parenthesis(sentence, 0)     
-            first_clause = sentence[0:end_parenthesis_index + 1]
-            next_operation = sentence[end_parenthesis_index + 1]
-            next_clause = sentence[end_parenthesis_index + 2:]
-
-            premises = [
-                self.parse_sentence(first_clause),
-                self.parse_sentence(next_clause)
-            ]
-
-            return Operation(next_operation, premises)
-        
-        # If none of the above, sentence starts with a literal
-        first_literal = sentence[0]
-        operation = sentence[1]
-        next_clause = sentence[2:]
-
-        return Operation(operation, [self.literals[first_literal], self.parse_sentence(next_clause)])
-
-    def parse_knowledge_base(self, kb: str) -> list[Operation]:
+    def evaluate_clause(self, clause: List[str], assignment: Dict[str, bool]) -> bool:
         """
-        Parse the knowledge base into a list of Operation objects.
+        Evaluate whether a clause is True or False.
+        A clause contains literals operated by OR.
+        Eg. a || ~b
+        A clause is True when at least one literal is True.
 
-        :param kb: The knowledge base string.
-        :return: A list of parsed Operation objects.
+        :param clause: The clause to evaluate.
+        :param assignment: The truth assignment for literals.
+        :return: True if the clause is True, False otherwise.
         """
-        kb_content = kb.strip()[:-1].split(";")
+        for literal in clause:
+            if literal[1] == True:
+                literal_value = not assignment[literal[0]]
+            else:
+                literal_value = assignment[literal[0]]
 
-        kb = []
-        for expression in kb_content:
-            sentence = self.find_all_words(expression)
-            kb.append(self.parse_sentence(sentence))
+            if literal_value:
+                return True
+            
+        return False
+    
+    def evaluate_kb(self, kb: List[List[List[str]]], assignment: Dict[str, bool]) -> bool:
+        """
+        Evaluate whether the knowledge base (kb) is True or False.
+        A kb contains different expressions.
+        A kb is True when all expressions are True.
 
-        return kb
+        :param kb: The knowledge base to evaluate.
+        :param assignment: The truth assignment for literals.
+        :return: True if the knowledge base is True, False otherwise.
+        """
+        for expression in kb:
+            expression_value = self.evaluate_expression(expression, assignment)
+            if not expression_value:
+                return False
+            
+        return True
+
+    def extract_expression(self, expressions: str) -> List[str]:
+        """
+        Extract all expressions inside the whole expressions.
+
+        :param expressions: The string containing multiple expressions.
+        :return: A list of individual expressions.
+        """
+        expressions = expressions.split(";")
+        expressions = [item.strip() for item in expressions if item.strip()]
+
+        return expressions
+
+    def extract_knowledge_base(self, knowledge_base: str) -> None:
+        """
+        Extract and process the knowledge base from the given string.
+
+        :param knowledge_base: The string containing the knowledge base.
+        """
+        knowledge_base = self.extract_expression(knowledge_base)
+
+        for expression in knowledge_base:
+            # Turn expression into a list of strings
+            expression = Parser.find_all_words(expression)
+            expression = CNFConverter.convert_sentence(expression)
+            [self.literals.add(item) for item in Parser.extract_literals(expression)]
+            expression = [list(group) for key, group in groupby(expression, lambda x: x == '&') if not key]
+
+            # Store converted expression into total knowledge base
+            knowledge_base_clause = []
+            for clause in expression:
+                knowledge_base_clause.append(Parser.extract_literals_with_signed(clause))
+
+            self.kb.append(knowledge_base_clause)
+
+    def extract_query(self, query: str) -> None:
+        """
+        Extract and process the query from the given string.
+
+        :param query: The string containing the query.
+        """
+        # Extract query
+        query = self.extract_expression(query)[0]
+        query = Parser.find_all_words(query)
+        query = CNFConverter.convert_sentence(query)
+        query = [list(group) for key, group in groupby(query, lambda x: x == '&') if not key]
+
+        # Store converted query
+        for clause in query:
+            self.query.append(Parser.extract_literals_with_signed(clause))
 
     def parse(self, filename: str) -> None:
         """
@@ -156,45 +131,38 @@ class TruthTable:
         """
         with open(filename, 'r') as f:
             file_content = f.readlines()
-            self.literals = self.parse_literals(file_content[1])
-            self.kb = self.parse_knowledge_base(file_content[1])
-            self.query = self.parse_sentence(self.find_all_words(file_content[3]))
+            kb_sentences = file_content[1]
+            query_sentence = file_content[3]
+            self.extract_knowledge_base(kb_sentences)
+            self.extract_query(query_sentence)
 
-    def generate_truth_assignments(self) -> Generator[dict, None, None]:
+            # for item in self.kb:
+            #     print(item)
+
+    def generate_truth_assignments(self) -> Generator[Dict[str, bool], None, None]:
         """
         Generate all possible combinations of truth values for literals.
 
         :yield: A dictionary representing a truth assignment.
         """
-        literals = list(self.literals.values())
-        for values in itertools.product([True, False], repeat=len(literals)):
-            assignment = {literal: value for literal, value in zip(literals, values)}
+        literals_list = list(self.literals)
+        for values in product([True, False], repeat=len(literals_list)):
+            assignment = {literal: value for literal, value in zip(literals_list, values)}
             yield assignment
 
-    def run(self) -> None:
+    def infer(self) -> None:
         """
         Run the truth table algorithm to determine if the knowledge base entails the query.
         """
-        is_entail = True
-        entailment_count = 0
-
+        valid_cases = 0
         for assignment in self.generate_truth_assignments():
-            # Set truth values for each literal based on current assignment
-            for literal, value in assignment.items():
-                literal.set_value(value)
+            kb_value = self.evaluate_kb(self.kb, assignment)
+            query_value = self.evaluate_expression(self.query, assignment)
 
-            # Evaluate knowledge base and query with current assignment
-            kb_result = all(statement.evaluate() for statement in self.kb)
-            query_result = self.query.evaluate()
+            if kb_value and query_value:
+                valid_cases += 1
 
-            if kb_result:
-                if not query_result:
-                    is_entail = False
-                    break
-                
-                entailment_count += 1
-
-        if is_entail:
-            print(f"YES: {entailment_count}")
+        if valid_cases > 0:
+            print(f"Yes: {valid_cases}")
         else:
-            print("NO")
+            print("No")

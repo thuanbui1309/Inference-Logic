@@ -2,6 +2,8 @@ import sys
 from truthTable import TruthTable
 from forwardChaining import ForwardChaining
 from backwardChaining import BackwardChaining
+from resolution import Resolution
+from dpll import DPLL
 
 def main():
     if len(sys.argv) == 3:
@@ -10,7 +12,7 @@ def main():
 
         if (method == "TT"):
             tt = TruthTable(filename)
-            tt.run()
+            tt.infer()
         elif (method == "FC"):
             FC = ForwardChaining(filename)
             FC.run()
@@ -18,9 +20,11 @@ def main():
             BC = BackwardChaining(filename)
             BC.run()
         elif (method == "RES"):
-            print("Resolution")
+            res = Resolution(filename)
+            res.infer()
         elif (method == "DPLL"):
-            print("DPLL")
+            dp = DPLL(filename)
+            dp.infer()
         else:
             print("Invalid method")
             sys.exit()
