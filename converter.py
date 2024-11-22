@@ -87,6 +87,9 @@ class CNFConverter:
     @staticmethod
     def apply_de_morgan(sentence: list[str]) -> list[str]:
         """Apply De Morgan's laws to the sentence."""
+        if len(sentence) == 0:
+            return sentence
+        
         if sentence[0] == "(" and Parser.find_end_parenthesis(sentence, 0) == len(sentence) - 1:
             sentence = sentence[1:len(sentence)-1]
 

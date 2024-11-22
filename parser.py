@@ -169,3 +169,74 @@ class Parser:
                 reconstruced_clause += operation
 
         return reconstruced_clause
+
+    @staticmethod
+    def is_horn_form(tell_part: str) -> bool:
+        """
+        Check if the given knowledge base is in Horn form.
+        :param tell_part: String representation of the knowledge base, clauses separated by ";".
+        :return: True if all clauses are in Horn form, False otherwise.
+        """
+        # Tách từng mệnh đề
+        clauses = tell_part.split(";")
+        
+        for clause in clauses:
+            clause = clause.strip()
+            
+            # Kiểm tra các phép không hợp lệ (<=> không được phép trong Horn Form)
+            if "<=>" in clause:
+                return False
+            
+            if "=>" in clause:
+                # Phân tách premise và conclusion
+                parts = clause.split("=>")
+                if len(parts) != 2:
+                    return False  # Sai cú pháp nếu có nhiều hơn 1 "=>"
+                
+                premises, conclusion = parts
+                premises = premises.strip()
+                conclusion = conclusion.strip()
+
+                # Kiểm tra conclusion (chỉ chứa 1 literal dương)
+                conclusion_literals = conclusion.split()
+                if conclusion.startswith("~") or len(conclusion_literals) > 1:
+                    return False
+            else:
+                # Nếu không có "=>", kiểm tra dạng disjunction
+                literals = clause.split("||")  # Tách literal theo phép OR
+                literals = [lit.strip() for lit in literals]  # Loại bỏ khoảng trắng thừa
+                
+                # Phân loại literal dương và âm
+                positive_literals = [lit for lit in literals if not lit.startswith("~")]
+                negative_literals = [lit for lit in literals if lit.startswith("~")]
+                
+                # Điều kiện:
+                # - Tối đa một literal dương
+                if len(positive_literals) > 1:
+                    return False
+        return True
+
+    @staticmethod
+    def disjunction_to_implication(disjunction):
+        """
+        Chuyển đổi biểu thức disjunction thành implication.
+        Biểu thức disjunction có thể có các ký hiệu như ~ (phủ định), || (phép OR).
+        """
+        # Tìm tất cả các biểu thức phủ định và không phủ định
+        terms = disjunction.split("||")  # Chia disjunction theo phép OR
+        negations = [term[1:] for term in terms if term.startswith("~")]  # Các phần phủ định
+        non_negations = [term for term in terms if not term.startswith("~")]  # Các phần không phủ định
+
+        # Kiểm tra nếu có ít nhất 1 phần phủ định và 1 phần không phủ định
+        if len(non_negations) >= 1:
+            # Dạng chung: ~A||~B||...||C
+            implication_parts = [f"{negation}" for negation in negations]
+            implication_parts.append(f"{non_negations[0]}")
+
+            # Chuyển đổi thành A&B&...⇒ C
+            implication = "&".join(implication_parts[:-1]) + "=>" + implication_parts[-1]
+            return implication
+        else:
+            print(disjunction)
+            print("Không thể chuyển đổi disjunction thành implication.")
+            return False

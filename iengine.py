@@ -15,10 +15,10 @@ def main():
             tt.infer()
         elif (method == "FC"):
             FC = ForwardChaining(filename)
-            FC.run()
+            FC.infer()
         elif (method == "BC"):
             BC = BackwardChaining(filename)
-            BC.run()
+            BC.infer()
         elif (method == "RES"):
             res = Resolution(filename)
             res.infer()
