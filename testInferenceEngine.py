@@ -348,7 +348,7 @@ class TestMapSolver(unittest.TestCase):
             (self.file_horn_5, "NO"),
 
             # Test Disjunction Horn Form
-            # (self.file_horn_6, "NO"),
+            # (self.file_horn_6, "YES: a, b, p2, p3, p1, d"),
             # (self.file_horn_7, "NO"),
 
             # # Test Mix Horn Form
@@ -372,6 +372,17 @@ class TestMapSolver(unittest.TestCase):
             (self.file_horn_3, "YES: a, x, b, y, z, d, w, v"),
             (self.file_horn_4, "YES: c, a, b, x, y, v"),
             (self.file_horn_5, "NO"),
+            
+            # Test Disjunction Horn Form
+            # (self.file_horn_6, "YES: p2, p3, p1, d"),
+            # (self.file_horn_7, "NO"),
+
+            # # Test Mix Horn Form
+            # (self.file_horn_8, "YES: p2, p3, p1, d"),
+            # (self.file_horn_9, "YES: a, x, b, y, u, z, w, v"),
+            # (self.file_horn_10, "YES: a, x, b, y, z, d, w, v"),
+            # (self.file_horn_11, "YES: c, a, b, x, y, v"),
+            # (self.file_horn_12, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:

@@ -7,8 +7,8 @@ TELL
 ~x || ~y || u;
 ~u || ~z || ~w || v;
 ~y || ~z || t;
-a || f;
-~b || c || g;
+~a || f;
+~b || ~c || g;
 ~d || ~e || h;
 ASK
 v

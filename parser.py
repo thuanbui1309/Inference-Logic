@@ -191,6 +191,7 @@ class Parser:
                 # Phân tách premise và conclusion
                 parts = clause.split("=>")
                 if len(parts) != 2:
+                    print("Error: More than one '=>' found in a clause.")
                     return False  # Sai cú pháp nếu có nhiều hơn 1 "=>"
                 
                 premises, conclusion = parts
@@ -200,6 +201,7 @@ class Parser:
                 # Kiểm tra conclusion (chỉ chứa 1 literal dương)
                 conclusion_literals = conclusion.split()
                 if conclusion.startswith("~") or len(conclusion_literals) > 1:
+                    print("Error: Conclusion must contain exactly 1 positive literal.")
                     return False
             else:
                 # Nếu không có "=>", kiểm tra dạng disjunction
@@ -213,6 +215,7 @@ class Parser:
                 # Điều kiện:
                 # - Tối đa một literal dương
                 if len(positive_literals) > 1:
+                    print("Error: At most 1 positive literal is allowed in a clause.")
                     return False
         return True
 
