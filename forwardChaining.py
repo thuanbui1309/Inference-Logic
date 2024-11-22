@@ -53,7 +53,6 @@ class ForwardChaining:
                 self.rules[conclusion].append((premises, is_negated_conclusion))
             else:
                 # If it is a fact
-                print(f"Fact : {clause}")
                 literal = clause.strip().lstrip("~")
                 is_positive = clause.strip().startswith("~")
                 self.facts[literal] = not is_positive

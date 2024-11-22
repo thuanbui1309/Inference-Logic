@@ -15,24 +15,21 @@ class TestMapSolver(unittest.TestCase):
     def setUp(self):
         # Test FC and BC Implication Horn Form
         self.file_horn_1 = "test_HornKB.txt"
-        self.file_horn_2 = "test_case/test_Horn_Implication_0.txt"
-        self.file_horn_3 = "test_case/test_Horn_Implication_1.txt"
-        self.file_horn_4 = "test_case/test_Horn_Implication_2.txt"
-        self.file_horn_5 = "test_case/test_Horn_Implication_3.txt"
+        self.file_horn_2 = "test_case/test_Horn_Implication_1.txt"
+        self.file_horn_3 = "test_case/test_Horn_Implication_2.txt"
+        self.file_horn_4 = "test_case/test_Horn_Implication_3.txt"
+        self.file_horn_5 = "test_case/test_Horn_Implication_4.txt"
 
         # Test FC and BC Disjunction Horn Form
-        self.file_horn_6 = "test_case/test_Horn_Disjunction_4.txt"
-        self.file_horn_7 = "test_case/test_Horn_Disjunction_5.txt"
-        self.file_horn_8 = "test_case/test_Horn_Disjunction_6.txt"
-        self.file_horn_9 = "test_case/test_Horn_Disjunction_7.txt"
-        self.file_horn_10 = "test_case/test_Horn_Disjunction_8.txt"
+        self.file_horn_6 = "test_case/test_Horn_Disjunction_1.txt"
+        self.file_horn_7 = "test_case/test_Horn_Disjunction_2.txt"
         
         # Test FC and BC Mix Horn Form
-        self.file_horn_11 = "test_case/test_Horn_Mix_9.txt"
-        self.file_horn_12 = "test_case/test_Horn_Mix_10.txt"
-        self.file_horn_13 = "test_case/test_Horn_Mix_11.txt"
-        self.file_horn_14 = "test_case/test_Horn_Mix_12.txt"
-        self.file_horn_15 = "test_case/test_Horn_Mix_13.txt"
+        self.file_horn_8 = "test_case/test_Horn_Mix_1.txt"
+        self.file_horn_9 = "test_case/test_Horn_Mix_2.txt"
+        self.file_horn_10 = "test_case/test_Horn_Mix_3.txt"
+        self.file_horn_11 = "test_case/test_Horn_Mix_4.txt"
+        self.file_horn_12 = "test_case/test_Horn_Mix_5.txt"
     
     # Test parser
     def test_findAllWords_returnCorrectList(self):
@@ -353,16 +350,13 @@ class TestMapSolver(unittest.TestCase):
             # Test Disjunction Horn Form
             # (self.file_horn_6, "NO"),
             # (self.file_horn_7, "NO"),
-            # (self.file_horn_8, "NO"),
-            # (self.file_horn_9, "NO"),
-            # (self.file_horn_10, "NO"),
 
             # # Test Mix Horn Form
-            # (self.file_horn_11, "YES: a, b, p2, p3, p1, d"),
-            # (self.file_horn_12, "YES: a, b, x, y, z, w, u, v"),
-            # (self.file_horn_13, "YES: a, b, d, x, y, z, w, v"),
-            # (self.file_horn_14, "YES: a, b, c, e, x, y, v"),
-            # (self.file_horn_15, "NO"),
+            # (self.file_horn_8, "YES: a, b, p2, p3, p1, d"),
+            # (self.file_horn_9, "YES: a, b, x, y, z, w, u, v"),
+            # (self.file_horn_10, "YES: a, b, d, x, y, z, w, v"),
+            # (self.file_horn_11, "YES: a, b, c, e, x, y, v"),
+            # (self.file_horn_12, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
