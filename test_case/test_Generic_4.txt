@@ -1,12 +1,12 @@
 TELL
-b & ¬e => f;
+b & ~e => f;
 f & g => h;
 p1 || p2 => p3;
 p3 => p1;
 p1 & p2 => c;
 c => e;
 a & p1 => d;
-p2 & ¬p1 => ¬d;
+p2 & ~p1 => ¬d;
 a;
 b;
 p2;
