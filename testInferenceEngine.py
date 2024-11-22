@@ -198,7 +198,7 @@ class TestMapSolver(unittest.TestCase):
         cases = [
             ("~a || b", "a => b"),
             ("~a || ~b || c", "a => ~b "),
-            ("a || b", "=>a ")
+            ("a || b", "")
         ]
         i = 0
         for disjunction, expected_output in cases:

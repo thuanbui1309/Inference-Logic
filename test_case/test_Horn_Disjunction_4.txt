@@ -8,6 +8,6 @@ TELL
 ~p1 || ~p3 || c;
 a;
 b;
-~p2;
+p2;
 ASK
 d

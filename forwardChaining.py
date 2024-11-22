@@ -33,11 +33,12 @@ class ForwardChaining:
         for clause in clauses:
             clause = clause.strip()
             if "||" in clause:
+                print(f"Disjunction : {clause}")
                 # Convert disjunction to implication
                 clause = Parser.disjunction_to_implication(clause)
-                if not clause:
-                    exit(1)
+                print(f"Implication : {clause}")
             if "=>" in clause:
+                print(f"Clause : {clause}")
                 # Parse left-hand side and right-hand side
                 premises, conclusion = clause.split("=>")
                 premises = [
@@ -52,6 +53,7 @@ class ForwardChaining:
                 self.rules[conclusion].append((premises, is_negated_conclusion))
             else:
                 # If it is a fact
+                print(f"Fact : {clause}")
                 literal = clause.strip().lstrip("~")
                 is_positive = clause.strip().startswith("~")
                 self.facts[literal] = not is_positive
