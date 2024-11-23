@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import List
+from typing import List, Tuple
 from parser import Parser
 from converter import CNFConverter
 
@@ -33,6 +33,7 @@ class Resolution:
         Extract and process the knowledge base from the given string.
 
         :param knowledge_base: The string containing the knowledge base.
+        :return: None
         """
         knowledge_base = self.extract_expression(knowledge_base)
 
@@ -51,6 +52,7 @@ class Resolution:
         Extract and process the query from the given string.
 
         :param query: The string containing the query.
+        :return: None
         """
         # Extract query
         query = self.extract_expression(query)[0]
@@ -71,6 +73,7 @@ class Resolution:
         Parse the file to extract literals, knowledge base, and query.
 
         :param filename: The file containing the knowledge base and query.
+        :return: None
         """
         with open(filename, 'r') as f:
             file_content = f.readlines()
@@ -79,20 +82,28 @@ class Resolution:
             self.extract_knowledge_base(kb_sentences)
             self.extract_query(query_sentence)
 
-        return None
-    
-    def complement_literal_exist(self, literal: list[int, int], clause: list[list[int, int]]):
+    def complement_literal_exist(self, literal: List[int], clause: List[List[int]]) -> int:
+        """
+        Check if the complement of a literal exists in a clause.
+
+        :param literal: The literal to check.
+        :param clause: The clause to check against.
+        :return: The index of the complement literal if it exists, otherwise -1.
+        """
         for i in range(len(clause)):
             if literal[0] == clause[i][0] and literal[1] != clause[i][1]:
                 return i
             
         return -1
     
-    def verify_converted_clause(self, clause):
+    def verify_converted_clause(self, clause: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
         Verify and simplify a clause:
-        - Remove duplicates.
-        - Handle tautologies (e.g., both `p` and `~p` in the same clause).
+            - Remove duplicates.
+            - Handle tautologies (e.g., both `p` and `~p` in the same clause).
+
+        :param clause: The clause to verify and simplify.
+        :return: The simplified clause.
         """
         literals = {}
         for literal, sign in clause:
@@ -106,7 +117,14 @@ class Resolution:
         return [(literal, sign) for literal, sign in literals.items()]
 
     
-    def resolve(self, clause, kb):        
+    def resolve(self, clause: List[Tuple[int, int]], kb: List[List[Tuple[int, int]]]) -> bool:
+        """
+        Resolve a clause against the knowledge base.
+
+        :param clause: The clause to resolve.
+        :param kb: The knowledge base.
+        :return: True if the clause can be resolved, otherwise False.
+        """
         for i in range(len(clause)):
             for j in range(len(kb)):
                 literal_idx = self.complement_literal_exist(clause[i], kb[j])
@@ -127,9 +145,12 @@ class Resolution:
     def infer(self) -> None:
         """
         Run the truth table algorithm to determine if the knowledge base entails the query.
+
+        :return: None
         """
         for clause in self.query:
             if not self.resolve(clause, self.kb):
                 print("NO")
                 return
+            
         print("YES")

@@ -439,14 +439,15 @@ class TestMapSolver(unittest.TestCase):
             (self.file_generic_8, "YES"),
             (self.file_generic_9, "YES"),
         ]
+
         i = 1
         for file, expected_output in cases:
-            print(f"Test case {i} should return {expected_output}")
             i += 1
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
                 Resolution(file).infer()
                 output = mock_stdout.getvalue().strip()
             self.assertEqual(output, expected_output)
+    
     # Test DPLL
     def test_dpll(self):
         cases = [

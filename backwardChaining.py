@@ -1,22 +1,33 @@
 import re
 from collections import deque
 from forwardChaining import ForwardChaining
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from parser import Parser
 
 class BackwardChaining:
     def __init__(self, filename: str):
+        """
+        Initialize the BackwardChaining object.
+
+        Args:
+            filename (str): The name of the file containing the knowledge base and query.
+        """
         # Rules stored as { conclusion: [([premises], is_negated)] }
         self.rules: Dict[str, List[Tuple[List[Tuple[str, bool]], bool]]] = {}
         # Facts stored with negation flag
         self.facts: Dict[str, bool] = {}
-        self.query: Tuple[str, bool] = None
+        self.query: Optional[Tuple[str, bool]] = None
         self.checked_literals: List[str] = []  # List of checked literals
         self.prevent_infinite = set()  # Prevent recursive loop
         self.parse_kb_and_query(filename)
 
     def parse_kb_and_query(self, filename: str) -> None:
-        """Parse the input file to get KB and query."""
+        """
+        Parse the input file to get the knowledge base and query.
+
+        Args:
+            filename (str): The name of the file containing the knowledge base and query.
+        """
         with open(filename, 'r') as file:
             content = file.read()
 
@@ -28,6 +39,7 @@ class BackwardChaining:
         if not Parser.is_horn_form(tell_part):
             print("The input knowledge base is not in Horn form.")
             exit(1)
+
         # Separate conditions in TELL
         clauses = tell_part.split(";")
         for clause in clauses:
@@ -59,8 +71,10 @@ class BackwardChaining:
         # Store query with negation flag if any
         self.query = (ask_part.strip().lstrip("~"), ask_part.strip().startswith("~"))
 
-    def infer(self):
-        """Run the algorithm and print YES or NO."""
+    def infer(self) -> None:
+        """
+        Run the backward chaining algorithm and print YES or NO.
+        """
         result = self.DoesEntail(*self.query)
         if result:
             print("YES: " + ", ".join(self.checked_literals))
@@ -68,13 +82,30 @@ class BackwardChaining:
             print("NO")
 
     def DoesEntail(self, literal_name: str, is_negated: bool) -> bool:
-        """Check if the literal can be inferred from KB."""
+        """
+        Check if the literal can be inferred from the knowledge base.
+
+        Args:
+            literal_name (str): The name of the literal to check.
+            is_negated (bool): Whether the literal is negated.
+
+        Returns:
+            bool: True if the literal can be inferred, False otherwise.
+        """
+        
         result = self.TruthValue(literal_name, is_negated)
         return result if not is_negated else not result
 
     def TruthValue(self, literal_name: str, is_negated: bool) -> bool:
         """
         Recursively check if the literal can be true.
+
+        Args:
+            literal_name (str): The name of the literal to check.
+            is_negated (bool): Whether the literal is negated.
+
+        Returns:
+            bool: True if the literal can be true, False otherwise.
         """
         # Check if it is a known fact
         if literal_name in self.facts:

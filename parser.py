@@ -4,7 +4,10 @@ class Parser:
     @staticmethod
     def find_all_words(expression: str) -> list[str]:
         """
-            Find all words (tokens) in the expression.
+        Find all words (tokens) in the expression.
+
+        :param expression: The input expression as a string.
+        :return: A list of tokens found in the expression.
         """
         token_pattern = r'[a-zA-Z0-9]+|[<=>]+|[~&()]|\|\|'
         return re.findall(token_pattern, expression)
@@ -12,7 +15,11 @@ class Parser:
     @staticmethod
     def find_start_parenthesis(sentence: list[str], start_index: int) -> int:
         """
-            Find the index of the matching opening parenthesis.
+        Find the index of the matching opening parenthesis.
+
+        :param sentence: The list of tokens representing the sentence.
+        :param start_index: The starting index to search for the opening parenthesis.
+        :return: The index of the matching opening parenthesis, or -1 if not found.
         """
         count = 0
         for i in range(start_index - 1, -1, -1):
@@ -27,7 +34,11 @@ class Parser:
     @staticmethod
     def find_end_parenthesis(sentence: list[str], start_index: int) -> int:
         """
-            Find the index of the matching closing parenthesis.
+        Find the index of the matching closing parenthesis.
+
+        :param sentence: The list of tokens representing the sentence.
+        :param start_index: The starting index to search for the closing parenthesis.
+        :return: The index of the matching closing parenthesis, or -1 if not found.
         """
         count = 0
         for i in range(start_index + 1, len(sentence)):
@@ -42,8 +53,11 @@ class Parser:
     @staticmethod
     def add_parentheses_if_needed(clause: list[str]) -> list[str]:
         """
-            Add parentheses around the clause if it contains more than one element
-            and is not already enclosed by matching parentheses.
+        Add parentheses around the clause if it contains more than one element
+        and is not already enclosed by matching parentheses.
+
+        :param clause: The list of tokens representing the clause.
+        :return: The clause with added parentheses if needed.
         """
         if len(clause) > 2 and not (clause[0] == '(' and Parser.find_end_parenthesis(clause, 0) == len(clause) - 1):
             clause = ['('] + clause + [')']
@@ -52,8 +66,11 @@ class Parser:
     @staticmethod
     def remove_paratheses_if_needed(clause: list[str]) -> list[str]:
         """
-            Remove parentheses around the clause if it contains more than one element
-            and is already enclosed by matching parentheses.
+        Remove parentheses around the clause if it contains more than one element
+        and is already enclosed by matching parentheses.
+
+        :param clause: The list of tokens representing the clause.
+        :return: The clause with removed parentheses if needed.
         """
         if len(clause) > 2 and clause[0] == '(' and Parser.find_end_parenthesis(clause, 0) == len(clause) - 1:
             clause = clause[1:-1]
@@ -62,35 +79,41 @@ class Parser:
     @staticmethod
     def extract_literals(expression: list[str]) -> list[str]:
         """
-            Extract the literal from the expression.
+        Extract the literals from the expression.
+
+        :param expression: The list of tokens representing the expression.
+        :return: A list of literals found in the expression.
         """
         literals = []
         for i in range(len(expression)):
             if expression[i] not in ["~", "&", "||", "(", ")", "=>", "<=>"]:
                 literals.append(expression[i])
-
         return literals
     
     @staticmethod
-    def extract_literals_with_signed(expression: list[str]) -> list[(str, bool)]:
+    def extract_literals_with_signed(expression: list[str]) -> list[tuple[str, bool]]:
         """
-            Extract the literals and its signs from the expression.
+        Extract the literals and their signs from the expression.
+
+        :param expression: The list of tokens representing the expression.
+        :return: A list of tuples where each tuple contains a literal and a boolean indicating if it is negated.
         """
         literals = []
         for i in range(len(expression)):
-            # print(expression[i])
             if expression[i] not in ["~", "&", "||", "(", ")", "=>", "<=>"]:
                 if i - 1 >= 0 and expression[i-1] == "~":
                     literals.append((expression[i], True))
                 else:
                     literals.append((expression[i], False))
-
         return literals
 
     @staticmethod
-    def extract_clauses(expression: list[str]) -> list[str]:
+    def extract_clauses(expression: list[str]) -> tuple[list[list[str]], list[str]]:
         """
-            Extract clauses from the expression.
+        Extract clauses from the expression.
+
+        :param expression: The list of tokens representing the expression.
+        :return: A tuple containing a list of clauses and a list of operations.
         """
         if expression[0] == '(' and Parser.find_end_parenthesis(expression, 0) == len(expression) - 1:
             expression = expression[1:-1]
@@ -135,9 +158,13 @@ class Parser:
         return clauses, operations
 
     @staticmethod
-    def organize_sentence(clauses: list[str], operations: list[str]) -> list[str]:
+    def organize_sentence(clauses: list[list[str]], operations: list[str]) -> tuple[list[list[str]], list[list[str]]]:
         """
-            Organize the sentence into OR and AND clauses.
+        Organize the sentence into OR and AND clauses.
+
+        :param clauses: The list of clauses.
+        :param operations: The list of operations.
+        :return: A tuple containing a list of OR clauses and a list of AND clauses.
         """
         or_clauses = []
         and_clauses = []
@@ -151,9 +178,13 @@ class Parser:
         return or_clauses, and_clauses
 
     @staticmethod
-    def reconstruct_clause(clause: list[str], operation) -> list[str]:
+    def reconstruct_clause(clause: list[list[str]], operation: str) -> list[str]:
         """
-            Reconstruct the clause with the given operation.
+        Reconstruct the clause with the given operation.
+
+        :param clause: The list of clauses to be reconstructed.
+        :param operation: The operation to be used for reconstruction.
+        :return: The reconstructed clause as a list of tokens.
         """
         if len(clause) == 0:
             return clause
@@ -174,70 +205,58 @@ class Parser:
     def is_horn_form(tell_part: str) -> bool:
         """
         Check if the given knowledge base is in Horn form.
+
         :param tell_part: String representation of the knowledge base, clauses separated by ";".
         :return: True if all clauses are in Horn form, False otherwise.
         """
-        # Tách từng mệnh đề
         clauses = tell_part.split(";")
         
         for clause in clauses:
             clause = clause.strip()
             
-            # Kiểm tra các phép không hợp lệ (<=> không được phép trong Horn Form)
             if "<=>" in clause:
                 return False
             
             if "=>" in clause:
-                # Phân tách premise và conclusion
                 parts = clause.split("=>")
                 if len(parts) != 2:
                     print("Error: More than one '=>' found in a clause.")
-                    return False  # Sai cú pháp nếu có nhiều hơn 1 "=>"
+                    return False
                 
                 premises, conclusion = parts
                 premises = premises.strip()
                 conclusion = conclusion.strip()
 
-                # Kiểm tra conclusion (chỉ chứa 1 literal dương)
                 conclusion_literals = conclusion.split()
                 if conclusion.startswith("~") or len(conclusion_literals) > 1:
                     print("Error: Conclusion must contain exactly 1 positive literal.")
                     return False
             else:
-                # Nếu không có "=>", kiểm tra dạng disjunction
-                literals = clause.split("||")  # Tách literal theo phép OR
-                literals = [lit.strip() for lit in literals]  # Loại bỏ khoảng trắng thừa
+                literals = clause.split("||")
+                literals = [lit.strip() for lit in literals]
                 
-                # Phân loại literal dương và âm
                 positive_literals = [lit for lit in literals if not lit.startswith("~")]
                 negative_literals = [lit for lit in literals if lit.startswith("~")]
                 
-                # Điều kiện:
-                # - Tối đa một literal dương
                 if len(positive_literals) > 1:
                     print("Error: At most 1 positive literal is allowed in a clause.")
                     return False
         return True
 
     @staticmethod
-    def disjunction_to_implication(disjunction):
+    def disjunction_to_implication(disjunction: str) -> str:
         """
-        Chuyển đổi biểu thức disjunction thành implication.
+        Convert a disjunction expression to an implication.
+
+        :param disjunction: The disjunction expression as a string.
+        :return: The implication expression as a string.
         """
-        # Tách các literals
         terms = [term.strip() for term in disjunction.split("||")]
 
-        # Phân loại phủ định và không phủ định
         negations = [term[1:] for term in terms if term.startswith("~")]
         non_negations = [term for term in terms if not term.startswith("~")]
 
-        # Vế trái: Phủ định của tất cả các negations
         left_side = " & ".join(negations)
-
-        # Vế phải: Một hoặc nhiều literals không phủ định
         right_side = " || ".join(non_negations)
 
-        # Kết quả
         return (f"{left_side} => {right_side}")
-
-        #đang sai
