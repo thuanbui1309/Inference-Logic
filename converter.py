@@ -268,6 +268,7 @@ class CNFConverter:
 
     @staticmethod
     def convert_sentence(sentence: list[str]) -> list[str]:
+        # print(sentence)
         """Convert the sentence to CNF."""
         if sentence[0] == '(' and Parser.find_end_parenthesis(sentence, 0) == len(sentence) - 1:
             sentence = sentence[1:-1]

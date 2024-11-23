@@ -58,7 +58,8 @@ class Resolution:
         query = self.extract_expression(query)[0]
         query = Parser.find_all_words(query)
         query = CNFConverter.convert_sentence(query)
-        query = CNFConverter.move_negations_inwards(["~", "("] + query + [")"])
+        query = Parser.add_parentheses_if_needed(query)
+        query = CNFConverter.move_negations_inwards(["~"] + query)
         query = CNFConverter.convert_sentence(query)
 
         # Convert each single query into a group of AND clauses
@@ -96,25 +97,29 @@ class Resolution:
             
         return -1
     
-    def verify_converted_clause(self, clause: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def verify_converted_clause(self, clause: List[Tuple[str, bool]]) -> List[Tuple[str, bool]]:
         """
         Verify and simplify a clause:
-            - Remove duplicates.
-            - Handle tautologies (e.g., both `p` and `~p` in the same clause).
-
+            - Remove duplicates of the same sign (keep only one).
+            - Remove literals with conflicting signs (e.g., both `p` and `~p`).
+        
         :param clause: The clause to verify and simplify.
         :return: The simplified clause.
         """
-        literals = {}
+        literal_sign_map = {}
         for literal, sign in clause:
-            if literal in literals:
-                if literals[literal] != sign:
-                    return []  # Tautology detected
+            if literal in literal_sign_map:
+                if literal_sign_map[literal] != sign:
+                    # Conflicting signs found; remove the literal entirely
+                    literal_sign_map.pop(literal)
+                # Otherwise, it is a duplicate with the same sign; do nothing
             else:
-                literals[literal] = sign
+                # Add the literal and its sign to the map
+                literal_sign_map[literal] = sign
 
-        # Rebuild the clause without duplicates
-        return [(literal, sign) for literal, sign in literals.items()]
+        # Return the simplified clause as a list of tuples
+        return [(literal, sign) for literal, sign in literal_sign_map.items()]
+
 
     
     def resolve(self, clause: List[Tuple[int, int]], kb: List[List[Tuple[int, int]]]) -> bool:
@@ -129,7 +134,6 @@ class Resolution:
             for j in range(len(kb)):
                 literal_idx = self.complement_literal_exist(clause[i], kb[j])
                 if literal_idx != -1:
-
                     converted_clause = self.verify_converted_clause(clause[:i] + clause[i+1:] + kb[j][:literal_idx] + kb[j][literal_idx+1:])
 
                     if len(converted_clause) == 0:

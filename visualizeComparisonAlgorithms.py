@@ -58,7 +58,7 @@ files_processed = []
 test_directory = "test_case"  # Update with your test cases directory
 
 # Filter test files
-txt_files = [f for f in os.listdir(test_directory) if f.endswith('.txt') and f.startswith('test_Generic') and f not in ['test_Generic_5.txt', 'test_Generic_6.txt', 'test_Generic_7.txt', 'test_Generic_10.txt']]
+txt_files = ['test_Generic_Possible_Res_1.txt', 'test_Generic_Possible_Res_2.txt', 'test_Generic_Possible_Res_3.txt', 'test_Generic_Possible_Res_4.txt']
 
 for file in txt_files:
     file_path = os.path.join(test_directory, file)
@@ -103,7 +103,7 @@ files_processed = []
 test_directory = "test_case"  # Update this to the path of your test case directory
 
 # Filter test files
-txt_files = ['test_Generic_5.txt', 'test_Generic_6.txt', 'test_Generic_7.txt', 'test_Generic_10.txt']
+txt_files = ['test_Generic_1.txt', 'test_Generic_2.txt', 'test_Generic_3.txt', 'test_Generic_4.txt', 'test_Generic_5.txt', 'test_Generic_6.txt']
 
 for file in txt_files:
     file_path = os.path.join(test_directory, file)

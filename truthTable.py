@@ -156,13 +156,14 @@ class TruthTable:
         """
         valid_cases = 0
         for assignment in self.generate_truth_assignments():
-            kb_value = self.evaluate_kb(self.kb, assignment)
+            kb_value = self.evaluate_kb(self.kb, assignment)  
             query_value = self.evaluate_expression(self.query, assignment)
-
+            
             if kb_value and query_value:
                 valid_cases += 1
 
-        if valid_cases > 0:
-            print(f"YES: {valid_cases}")
-        else:
-            print("NO")
+            if kb_value and not query_value:
+                print("NO")
+                return
+        
+        print(f"YES: {valid_cases}") 

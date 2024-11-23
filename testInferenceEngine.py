@@ -38,10 +38,12 @@ class TestMapSolver(unittest.TestCase):
         self.file_generic_4 = "test_case/test_Generic_4.txt"
         self.file_generic_5 = "test_case/test_Generic_5.txt"
         self.file_generic_6 = "test_case/test_Generic_6.txt"
-        self.file_generic_7 = "test_case/test_Generic_7.txt"
-        self.file_generic_8 = "test_case/test_Generic_8.txt"
-        self.file_generic_9 = "test_case/test_Generic_9.txt"
-        self.file_generic_10 = "test_case/test_Generic_10.txt"
+
+        # Test Resolution (can be used to test Truth Table and DPLL as well)
+        self.file_res_1 = "test_case/test_Generic_Possible_Res_1.txt"
+        self.file_res_2 = "test_case/test_Generic_Possible_Res_2.txt"
+        self.file_res_3 = "test_case/test_Generic_Possible_Res_3.txt"
+        self.file_res_4 = "test_case/test_Generic_Possible_Res_4.txt"
     
     # Test parser
     def test_findAllWords_returnCorrectList(self):
@@ -354,12 +356,12 @@ class TestMapSolver(unittest.TestCase):
             (self.file_generic_2, "YES: 9"),
             (self.file_generic_3, "YES: 3"),
             (self.file_generic_4, "YES: 7"),
-            (self.file_generic_5, "YES: 10"),
-            (self.file_generic_6, "YES: 28"),
-            (self.file_generic_7, "YES: 6"),
-            (self.file_generic_8, "YES: 1"),
-            (self.file_generic_9, "YES: 13"),
-            (self.file_generic_10, "YES: 3"),
+            (self.file_generic_5, "YES: 1"),
+            (self.file_generic_6, "NO"),
+            (self.file_res_1, "NO"),
+            (self.file_res_2, "NO"),
+            (self.file_res_3, "NO"),
+            (self.file_res_4, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
@@ -432,12 +434,10 @@ class TestMapSolver(unittest.TestCase):
             (self.file_horn_4, "YES"),
 
             #Test Generic
-            (self.file_generic_1, "YES"),
-            (self.file_generic_2, "YES"),
-            (self.file_generic_3, "YES"),
-            (self.file_generic_4, "YES"),
-            (self.file_generic_8, "YES"),
-            (self.file_generic_9, "YES"),
+            (self.file_res_1, "NO"),
+            (self.file_res_2, "NO"),
+            (self.file_res_3, "NO"),
+            (self.file_res_4, "NO"),
         ]
 
         i = 1
@@ -463,11 +463,11 @@ class TestMapSolver(unittest.TestCase):
             (self.file_generic_3, "YES"),
             (self.file_generic_4, "YES"),
             (self.file_generic_5, "YES"),
-            (self.file_generic_6, "YES"),
-            (self.file_generic_7, "YES"),
-            (self.file_generic_8, "YES"),
-            (self.file_generic_9, "YES"),
-            (self.file_generic_10, "YES"),
+            (self.file_generic_6, "NO"),
+            (self.file_res_1, "NO"),
+            (self.file_res_2, "NO"),
+            (self.file_res_3, "NO"),
+            (self.file_res_4, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:

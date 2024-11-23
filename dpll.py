@@ -70,16 +70,16 @@ class DPLL:
         query = self.extract_expression(query)[0]
         query = Parser.find_all_words(query)
         query = CNFConverter.convert_sentence(query)
-        query = CNFConverter.move_negations_inwards(["~", "("] + query + [")"])
+        query = Parser.add_parentheses_if_needed(query)
+        query = CNFConverter.move_negations_inwards(["~"] + query)
         query = CNFConverter.convert_sentence(query)
 
         # Convert each single query into a group of AND clauses
         query = [list(group) for key, group in groupby(query, lambda x: x == '&') if not key]
 
-        # Add negated query to knowledge base (for checking entailment)
+        # Store converted expression into total knowledge base
         for clause in query:
-            negated_clause = [(literal, not sign) for literal, sign in Parser.extract_literals_with_signed(clause)]
-            self.kb.append(negated_clause)
+            self.kb.append(Parser.extract_literals_with_signed(clause))
 
     def perform_unit_propagation(self, kb: List[List[Tuple[str, bool]]]) -> Tuple[List[List[Tuple[str, bool]]], str]:
         """
@@ -110,6 +110,9 @@ class DPLL:
             for clause in kb:
                 if negated_literal in clause:
                     clause.remove(negated_literal)
+    
+            # for item in kb:
+            #     print(item)
 
             if [] in kb:
                 return kb, "UNSAT"
@@ -204,22 +207,23 @@ class DPLL:
         # Perform Unit Propagation
         self.kb, status = self.perform_unit_propagation(self.kb)
         if status == "UNSAT":
-            print("NO")
-            return
-        elif status == "SAT":
             print("YES")
             return
+        elif status == "SAT":
+            print("NO")
+            return
 
+        
         # Perform Pure Literal Elimination
         self.kb = self.perform_pure_literal_elimination(self.kb)
 
         if len(self.kb) == 0:
-            print("YES")
+            print("NO")
             return
 
         # Perform Branching
         _, status = self.perform_branching(self.kb)
         if status:
-            print("YES")
-        else:
             print("NO")
+        else:
+            print("YES")
