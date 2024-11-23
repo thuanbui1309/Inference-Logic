@@ -207,7 +207,7 @@ class DPLL:
             print("NO")
             return
         elif status == "SAT":
-            print("YES1")
+            print("YES")
             return
 
         # Perform Pure Literal Elimination

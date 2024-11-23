@@ -163,6 +163,6 @@ class TruthTable:
                 valid_cases += 1
 
         if valid_cases > 0:
-            print(f"Yes: {valid_cases}")
+            print(f"YES: {valid_cases}")
         else:
-            print("No")
+            print("NO")

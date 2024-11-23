@@ -33,12 +33,9 @@ class ForwardChaining:
         for clause in clauses:
             clause = clause.strip()
             if "||" in clause:
-                print(f"Disjunction : {clause}")
                 # Convert disjunction to implication
                 clause = Parser.disjunction_to_implication(clause)
-                print(f"Implication : {clause}")
             if "=>" in clause:
-                print(f"Clause : {clause}")
                 # Parse left-hand side and right-hand side
                 premises, conclusion = clause.split("=>")
                 premises = [

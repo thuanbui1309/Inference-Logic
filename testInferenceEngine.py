@@ -30,6 +30,18 @@ class TestMapSolver(unittest.TestCase):
         self.file_horn_10 = "test_case/test_Horn_Mix_3.txt"
         self.file_horn_11 = "test_case/test_Horn_Mix_4.txt"
         self.file_horn_12 = "test_case/test_Horn_Mix_5.txt"
+
+        #Test Generic  
+        self.file_generic_1 = "test_case/test_Generic_1.txt"
+        self.file_generic_2 = "test_case/test_Generic_2.txt"
+        self.file_generic_3 = "test_case/test_Generic_3.txt"
+        self.file_generic_4 = "test_case/test_Generic_4.txt"
+        self.file_generic_5 = "test_case/test_Generic_5.txt"
+        self.file_generic_6 = "test_case/test_Generic_6.txt"
+        self.file_generic_7 = "test_case/test_Generic_7.txt"
+        self.file_generic_8 = "test_case/test_Generic_8.txt"
+        self.file_generic_9 = "test_case/test_Generic_9.txt"
+        self.file_generic_10 = "test_case/test_Generic_10.txt"
     
     # Test parser
     def test_findAllWords_returnCorrectList(self):
@@ -194,13 +206,9 @@ class TestMapSolver(unittest.TestCase):
     def test_disjunction_to_implication(self):
         cases = [
             ("~a || b", "a => b"),
-            ("~a || ~b || c", "a => ~b "),
-            ("a || b", "")
+            ("~a || ~b || c", "a & b => c"),
         ]
-        i = 0
         for disjunction, expected_output in cases:
-            print("Test case ", i)
-            i += 1
             output = Parser.disjunction_to_implication(disjunction)
             if expected_output is False:
                 self.assertFalse(output)
@@ -335,7 +343,29 @@ class TestMapSolver(unittest.TestCase):
 
     # Test Truth Table
     def test_truth_table(self):
-        pass
+        cases = [
+            # Test Horn Form
+            (self.file_horn_1, "YES: 3"),
+            (self.file_horn_2, "YES: 14"),
+            (self.file_horn_3, "YES: 2"),
+
+            #Test Generic
+            (self.file_generic_1, "YES: 3"),
+            (self.file_generic_2, "YES: 9"),
+            (self.file_generic_3, "YES: 3"),
+            (self.file_generic_4, "YES: 7"),
+            (self.file_generic_5, "YES: 10"),
+            (self.file_generic_6, "YES: 28"),
+            (self.file_generic_7, "YES: 6"),
+            (self.file_generic_8, "YES: 1"),
+            (self.file_generic_9, "YES: 13"),
+            (self.file_generic_10, "YES: 3"),
+        ]
+        for file, expected_output in cases:
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                TruthTable(file).infer()
+                output = mock_stdout.getvalue().strip()
+            self.assertEqual(output, expected_output)
     
     # Test Forward Chaining
     def test_forward_chaining(self):
@@ -347,16 +377,16 @@ class TestMapSolver(unittest.TestCase):
             (self.file_horn_4, "YES: a, b, c, e, x, y, v"),
             (self.file_horn_5, "NO"),
 
-            # Test Disjunction Horn Form
-            # (self.file_horn_6, "YES: a, b, p2, p3, p1, d"),
-            # (self.file_horn_7, "NO"),
+            #Test Disjunction Horn Form
+            (self.file_horn_6, "YES: a, b, p2, p3, p1, d"),
+            (self.file_horn_7, "NO"),
 
-            # # Test Mix Horn Form
-            # (self.file_horn_8, "YES: a, b, p2, p3, p1, d"),
-            # (self.file_horn_9, "YES: a, b, x, y, z, w, u, v"),
-            # (self.file_horn_10, "YES: a, b, d, x, y, z, w, v"),
-            # (self.file_horn_11, "YES: a, b, c, e, x, y, v"),
-            # (self.file_horn_12, "NO"),
+            # Test Mix Horn Form
+            (self.file_horn_8, "YES: a, b, p2, p3, p1, d"),
+            (self.file_horn_9, "YES: a, b, x, y, z, w, u, v"),
+            (self.file_horn_10, "YES: a, b, d, x, y, z, w, v"),
+            (self.file_horn_11, "YES: a, b, c, e, x, y, v"),
+            (self.file_horn_12, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
@@ -373,16 +403,16 @@ class TestMapSolver(unittest.TestCase):
             (self.file_horn_4, "YES: c, a, b, x, y, v"),
             (self.file_horn_5, "NO"),
             
-            # Test Disjunction Horn Form
-            # (self.file_horn_6, "YES: p2, p3, p1, d"),
-            # (self.file_horn_7, "NO"),
+            #Test Disjunction Horn Form
+            (self.file_horn_6, "YES: p2, p3, p1, d"),
+            (self.file_horn_7, "NO"),
 
-            # # Test Mix Horn Form
-            # (self.file_horn_8, "YES: p2, p3, p1, d"),
-            # (self.file_horn_9, "YES: a, x, b, y, u, z, w, v"),
-            # (self.file_horn_10, "YES: a, x, b, y, z, d, w, v"),
-            # (self.file_horn_11, "YES: c, a, b, x, y, v"),
-            # (self.file_horn_12, "NO"),
+            # Test Mix Horn Form
+            (self.file_horn_8, "YES: p2, p3, p1, d"),
+            (self.file_horn_9, "YES: a, x, b, y, u, z, w, v"),
+            (self.file_horn_10, "YES: a, x, b, y, z, d, w, v"),
+            (self.file_horn_11, "YES: c, a, b, x, y, v"),
+            (self.file_horn_12, "NO"),
         ]
         for file, expected_output in cases:
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
@@ -394,10 +424,53 @@ class TestMapSolver(unittest.TestCase):
     
     # Test Resolution
     def test_resolution(self):
-        pass
+        cases = [
+            # Test Implication Horn Form
+            # (self.file_horn_1, "YES"),
+            # (self.file_horn_2, "YES"),
+            # (self.file_horn_3, "YES"),
+            # (self.file_horn_4, "YES"),
+
+            #Test Generic
+            (self.file_generic_1, "YES"),
+            (self.file_generic_2, "YES"),
+            (self.file_generic_3, "YES"),
+            (self.file_generic_4, "YES"),
+        ]
+        i = 1
+        for file, expected_output in cases:
+            print(f"Test case {i} should return {expected_output}")
+            i += 1
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                Resolution(file).infer()
+                output = mock_stdout.getvalue().strip()
+            self.assertEqual(output, expected_output)
     # Test DPLL
     def test_dpll(self):
-        pass
+        cases = [
+            # Test Implication Horn Form
+            (self.file_horn_1, "YES"),
+            (self.file_horn_2, "YES"),
+            (self.file_horn_3, "YES"),
+            (self.file_horn_4, "YES"),
+
+            #Test Generic
+            (self.file_generic_1, "YES"),
+            (self.file_generic_2, "YES"),
+            (self.file_generic_3, "YES"),
+            (self.file_generic_4, "YES"),
+            (self.file_generic_5, "YES"),
+            (self.file_generic_6, "YES"),
+            (self.file_generic_7, "YES"),
+            (self.file_generic_8, "YES"),
+            (self.file_generic_9, "YES"),
+            (self.file_generic_10, "YES"),
+        ]
+        for file, expected_output in cases:
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                DPLL(file).infer()
+                output = mock_stdout.getvalue().strip()
+            self.assertEqual(output, expected_output)
 
 if __name__ == "__main__":
     unittest.main()
