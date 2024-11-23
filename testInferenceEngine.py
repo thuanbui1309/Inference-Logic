@@ -426,16 +426,18 @@ class TestMapSolver(unittest.TestCase):
     def test_resolution(self):
         cases = [
             # Test Implication Horn Form
-            # (self.file_horn_1, "YES"),
-            # (self.file_horn_2, "YES"),
-            # (self.file_horn_3, "YES"),
-            # (self.file_horn_4, "YES"),
+            (self.file_horn_1, "YES"),
+            (self.file_horn_2, "YES"),
+            (self.file_horn_3, "YES"),
+            (self.file_horn_4, "YES"),
 
             #Test Generic
             (self.file_generic_1, "YES"),
             (self.file_generic_2, "YES"),
             (self.file_generic_3, "YES"),
             (self.file_generic_4, "YES"),
+            (self.file_generic_8, "YES"),
+            (self.file_generic_9, "YES"),
         ]
         i = 1
         for file, expected_output in cases:
