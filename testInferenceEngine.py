@@ -426,10 +426,10 @@ class TestMapSolver(unittest.TestCase):
     def test_resolution(self):
         cases = [
             # Test Implication Horn Form
-            # (self.file_horn_1, "YES"),
-            # (self.file_horn_2, "YES"),
-            # (self.file_horn_3, "YES"),
-            # (self.file_horn_4, "YES"),
+            (self.file_horn_1, "YES"),
+            (self.file_horn_2, "YES"),
+            (self.file_horn_3, "YES"),
+            (self.file_horn_4, "YES"),
 
             #Test Generic
             (self.file_generic_1, "YES"),
@@ -437,14 +437,15 @@ class TestMapSolver(unittest.TestCase):
             (self.file_generic_3, "YES"),
             (self.file_generic_4, "YES"),
         ]
+
         i = 1
         for file, expected_output in cases:
-            print(f"Test case {i} should return {expected_output}")
             i += 1
             with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
                 Resolution(file).infer()
                 output = mock_stdout.getvalue().strip()
             self.assertEqual(output, expected_output)
+    
     # Test DPLL
     def test_dpll(self):
         cases = [

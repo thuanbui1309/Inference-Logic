@@ -66,7 +66,7 @@ class Resolution:
         for clause in query:
             self.query.append(Parser.extract_literals_with_signed(clause))
 
-    def parse(self, filename: str) -> None:
+    def parse(self, filename: str):
         """
         Parse the file to extract literals, knowledge base, and query.
 
@@ -79,8 +79,6 @@ class Resolution:
             self.extract_knowledge_base(kb_sentences)
             self.extract_query(query_sentence)
 
-        return None
-    
     def complement_literal_exist(self, literal: list[int, int], clause: list[list[int, int]]):
         for i in range(len(clause)):
             if literal[0] == clause[i][0] and literal[1] != clause[i][1]:
@@ -132,4 +130,5 @@ class Resolution:
             if not self.resolve(clause, self.kb):
                 print("NO")
                 return
+            
         print("YES")
