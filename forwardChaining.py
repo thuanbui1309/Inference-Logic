@@ -1,22 +1,32 @@
 import re
 from collections import deque
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from parser import Parser  
 
 class ForwardChaining:
     def __init__(self, filename: str):
+        """
+        Initialize the ForwardChaining object with the given filename.
+
+        Args:
+            filename (str): The name of the file containing the knowledge base and query.
+        """
         # Rules stored as { conclusion: [([premises], is_negated)] }
         self.rules: Dict[str, List[Tuple[List[Tuple[str, bool]], bool]]] = {}
         # Facts stored with negation flag
         self.facts: Dict[str, bool] = {}
-        self.query: Tuple[str, bool] = None
+        self.query: Optional[Tuple[str, bool]] = None
         self.derived_facts = set()  # Set of facts derived during execution
         self.entailments = []  # List of derived symbols
         self.parse_kb_and_query(filename)
 
-
     def parse_kb_and_query(self, filename: str) -> None:
-        """Parse the input file to get KB and query."""
+        """
+        Parse the input file to get the knowledge base (KB) and query.
+
+        Args:
+            filename (str): The name of the file containing the knowledge base and query.
+        """
         with open(filename, 'r') as file:
             content = file.read()
 
@@ -57,8 +67,10 @@ class ForwardChaining:
         # Store query with negation flag if any
         self.query = (ask_part.strip().lstrip("~"), ask_part.strip().startswith("~"))
 
-    def infer(self):
-        """Run the algorithm and print YES or NO with the required format."""
+    def infer(self) -> None:
+        """
+        Run the forward chaining algorithm and print YES or NO with the required format.
+        """
         # Initialize known facts
         agenda = deque([fact for fact, is_true in self.facts.items() if is_true])
         self.derived_facts = set(agenda)
